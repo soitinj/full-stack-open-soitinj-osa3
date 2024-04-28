@@ -79,17 +79,17 @@ app.post('/api/persons', (request, response, next) => {
     number: body.number
   })
   if (!(newPerson.name && newPerson.number)) {
-    response.status(400).json({'error': 'Name or number missing'})
+    response.status(400).json({ 'error': 'Name or number missing' })
   //} else if (persons.find(p => p.name.toLowerCase() === newPerson.name.toLowerCase())) {
   //  response.status(409).json({'error': 'Name already exists'})
   } else {
     Person.findOne( { name: newPerson.name })
       .then(person => {
-        if (person) response.status(409).json({'error': 'Name already exists'})
+        if (person) response.status(409).json({ 'error': 'Name already exists' })
         else {
           newPerson.save().then(result => {
             response.json(result)
-          }).catch(error => next(error))      
+          }).catch(error => next(error))
         }
       })
       .catch(error => next(error))
@@ -98,8 +98,8 @@ app.post('/api/persons', (request, response, next) => {
 
 app.put('/api/persons/:id', (request, response, next) => {
   const newNumber = request.body.number
-  if (!(newNumber)) response.status(400).json({'error': 'Updated number missing'})
-  Person.findByIdAndUpdate(request.params.id, { $set: {number: newNumber}}, { new: true, runValidators: true, context: 'query' })
+  if (!(newNumber)) response.status(400).json({ 'error': 'Updated number missing' })
+  Person.findByIdAndUpdate(request.params.id, { $set: { number: newNumber } }, { new: true, runValidators: true, context: 'query' })
     .then(person => {
       if (person) response.json(person)
       else response.status(404).end()
