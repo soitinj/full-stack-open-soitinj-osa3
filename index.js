@@ -42,15 +42,15 @@ app.get('/info', (request, response) => {
   //response.send(`<p>Phonebook has info for ${persons.length} people</p><p>${currentDate}</p>`)
 })
 
-app.get('/api/persons', (request, response) => {
+app.get('/api/persons', (request, response, next) => {
   Person.find({}).then(result => {
     response.json(result)
-  })
+  }).catch(error => next(error))
 })
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
   //const person = persons.find(p => p.id === Number(request.params.id))
-  const person = Person.findById(request.params.id)
+  Person.findById(request.params.id)
     .then(person => {
       if (person) {
         response.json(person)
@@ -58,21 +58,18 @@ app.get('/api/persons/:id', (request, response) => {
         response.status(404).end()
       }
     })
-    .catch(error => {
-      console.log(error)
-      response.status(400).send({ error: 'Malformatted id' })
-    })
+    .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
-    .then(result => response.status(204).end())
+    .then(person => response.status(204).end())
     .catch(error => next(error))
   //persons = persons.filter(p => p.id !== Number(request.params.id))
   //response.status(204).end()
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   // For simplicity, no uuid is used
   const body = request.body
   //const randomId = Math.floor(Math.random() * 1000000)
@@ -86,11 +83,48 @@ app.post('/api/persons', (request, response) => {
   //} else if (persons.find(p => p.name.toLowerCase() === newPerson.name.toLowerCase())) {
   //  response.status(409).json({'error': 'Name already exists'})
   } else {
-    newPerson.save().then(result => {
-      response.json(result)
-    })
+    Person.findOne( { name: newPerson.name })
+      .then(person => {
+        if (person) response.status(409).json({'error': 'Name already exists'})
+        else {
+          newPerson.save().then(result => {
+            response.json(result)
+          }).catch(error => next(error))      
+        }
+      })
+      .catch(error => next(error))
   }
 })
+
+app.put('/api/persons/:id', (request, response) => {
+  const body = request.body
+  const newNumber = body.number
+  if (!(newNumber)) response.status(400).json({'error': 'Updated number missing'})
+  Person.findByIdAndUpdate(request.params.id, { $set: {number: newNumber}}, { new: true })
+    .then(person => {
+      if (person) response.json(person)
+      else response.status(404).end()
+    })
+    .catch(error => next(error))
+})
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: '404 unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'Malformed id' })
+  }
+
+  next(error)
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
