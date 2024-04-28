@@ -11,7 +11,7 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :p
 app.use(cors())
 app.use(express.static('dist'))
 
-let persons = [
+/*let persons = [
   {
     "id": 1,
     "name": "Arto Hellas",
@@ -32,7 +32,7 @@ let persons = [
     "name": "Mary Poppendieck",
     "number": "39-23-6423122"
   }
-]
+]*/
 
 app.get('/info', (request, response) => {
   const currentDate = Date()
