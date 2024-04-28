@@ -10,8 +10,23 @@ mongoose.connect(url)
   .catch(error => console.log('error connecting to MongoDB:', error.message))
 
 const personSchema = new mongoose.Schema({
-  name: String,
-  number: String
+  name: {
+    type: String,
+    minlength: 3,
+    required: true
+  },
+  number: {
+    type: String,
+    minlength: 8,
+    validate: {
+      validator: (v) => {
+        const numberArray = v.split('-')
+        return numberArray.length === 2 && numberArray.every(piece => piece.length > 1 && Number.isInteger(Number(piece)) )
+      },
+      message: 'Number must formatted as 09-123456'
+    },
+    required: true
+  }
 })
   
 personSchema.set('toJSON', {

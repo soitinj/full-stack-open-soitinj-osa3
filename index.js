@@ -96,11 +96,10 @@ app.post('/api/persons', (request, response, next) => {
   }
 })
 
-app.put('/api/persons/:id', (request, response) => {
-  const body = request.body
-  const newNumber = body.number
+app.put('/api/persons/:id', (request, response, next) => {
+  const newNumber = request.body.number
   if (!(newNumber)) response.status(400).json({'error': 'Updated number missing'})
-  Person.findByIdAndUpdate(request.params.id, { $set: {number: newNumber}}, { new: true })
+  Person.findByIdAndUpdate(request.params.id, { $set: {number: newNumber}}, { new: true, runValidators: true, context: 'query' })
     .then(person => {
       if (person) response.json(person)
       else response.status(404).end()
@@ -119,6 +118,8 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'Malformed id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
   }
 
   next(error)
